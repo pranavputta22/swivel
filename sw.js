@@ -1,6 +1,6 @@
 /* Swivel service worker: keeps the game's files on the device so it opens with no connection. */
 'use strict';
-var APP = 'swivel-app-048a892a32';
+var APP = 'swivel-app-daf4176edd';
 var FONTS = 'swivel-fonts-v1';
 var SHELL = ["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png","icon-maskable-512.png"];
 

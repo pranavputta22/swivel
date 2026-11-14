@@ -2061,12 +2061,12 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   // ---------- saving ----------
   // The trial page keeps its own save and never talks to the account, so it cannot touch the real game's record.
   var TRIAL = false; // set by tools/build.js for dist/trial.html
-  var VERSION = '1.0', BUILD = 11; // BUILD goes up by one with every release
+  var VERSION = '1.0', BUILD = 12; // BUILD goes up by one with every release
   // the safety net at the top of the page keeps a note of anything that fails: it is told which build this is
   var NET = window.__swivelNet || null;
   if (NET) NET.build = VERSION + ' (' + BUILD + ')';
   // who made what, for the Credits sheet and the ending: [what, who]
-  var CREDITS = [['Typeface', 'Overpass, SIL Open Font License']];
+  var CREDITS = [['Made by', 'Brightfold'], ['Contact', 'brightfoldapps@icloud.com'], ['Typeface', 'Overpass, SIL Open Font License']];
   var KEY = TRIAL ? 'swivel.trial' : 'swivel.v2', KEY_V1 = TRIAL ? 'swivel.trial.v1' : 'swivel.v1';
   // The first release numbered its six worlds. A world is now known by its id, so a
   // world can be added between two others without moving anybody's stars.
@@ -3022,14 +3022,15 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     });
     body += '</ul>';
     if (ending) {
-      body += '<div class="runend"><p class="lede thanks">Thank you for playing.</p><ul class="plain">' + CREDITS.map(function () { return '<li><b></b><span></span></li>'; }).join('') + '</ul></div>';
+      body += '<div class="runend"><p class="lede thanks">Thank you for playing.</p><ul class="plain">' + CREDITS.slice(0, 1).map(function () { return '<li><b></b><span></span></li>'; }).join('') + '</ul></div>';
     }
     body += '</div>';
     var sh = openSheet('blue', body, [{ label: 'Done', solid: true, act: function () { if (current === 'game' && G && G.won) showWin(true); } }], !ending);
     sh.classList.add('wide');
     if (ending) {
       var rows = sh.querySelectorAll('.plain li');
-      CREDITS.forEach(function (c, i) { $('b', rows[i]).textContent = c[0]; $('span', rows[i]).textContent = c[1]; });
+      // (the ending names only the maker: the full list is under Settings, Credits)
+      CREDITS.slice(0, 1).forEach(function (c, i) { $('b', rows[i]).textContent = c[0]; $('span', rows[i]).textContent = c[1]; });
     }
   }
   function solvedIn(wi) {

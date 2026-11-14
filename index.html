@@ -91,7 +91,10 @@
   window.addEventListener('error', function (e) {
     var msg = e && e.message ? String(e.message) : '';
     if (!msg || /ResizeObserver loop/i.test(msg)) return;
-    if (/^Script error\.?$/i.test(msg) && !e.filename) return; // somebody else's script: nothing can be known about it
+    // Somebody else's script is not the game failing: one from another site (all a browser will say of
+    // it is "Script error."), or one that a browser extension has put into the page.
+    if (/^Script error\.?$/i.test(msg)) return;
+    if (/^(chrome|moz|safari-web|safari|ms-browser)-extension:|^webkit-masked-url:/i.test(e.filename || '')) return;
     show(note('error', msg, (e.lineno || 0) + ':' + (e.colno || 0), e.error && e.error.stack));
   });
   // a promise nobody was waiting for: noted, but the game has not stopped, so the player is not interrupted
@@ -2033,7 +2036,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   // ---------- saving ----------
   // The trial page keeps its own save and never talks to the account, so it cannot touch the real game's record.
   var TRIAL = false; // set by tools/build.js for dist/trial.html
-  var VERSION = '1.0', BUILD = 9; // BUILD goes up by one with every release
+  var VERSION = '1.0', BUILD = 10; // BUILD goes up by one with every release
   // the safety net at the top of the page keeps a note of anything that fails: it is told which build this is
   var NET = window.__swivelNet || null;
   if (NET) NET.build = VERSION + ' (' + BUILD + ')';
@@ -4797,8 +4800,10 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       '<ul class="plain">' +
       '<li>Your progress, the levels you draw and your settings are kept on this device.' + (cloud.ref && !cloud.off ? ' Inside Claude, your progress is also saved to your Claude account.' : '') +
         (shell.on ? ' If iCloud is on for Swivel, your progress is also kept in your own iCloud, so it follows you to a new phone. Only you can read it.' : '') + '</li>' +
-      '<li>Nothing about you or how you play is collected or sent anywhere.</li>' +
-      (shell.on ? '<li>Game Center, if you use it, is Apple\'s: Swivel gives it your achievements and three scores, and nothing else. A daily reminder, if you turn it on, is made on this phone.</li>' : '') +
+      // (in the app one thing can leave the phone without being shared by hand: what Game Center is given. It is said plainly.)
+      (shell.on ? '<li>Swivel collects nothing about you or how you play, and sends nothing to its makers.</li>' +
+        '<li>Game Center, if you are signed in to it, is Apple\'s: the app gives it your Swivel achievements and three scores, and nothing else. A daily reminder, if you turn it on, is made on this phone.</li>'
+        : '<li>Nothing about you or how you play is collected or sent anywhere.</li>') +
       (remoteFont ? '<li>This web version loads its typeface from Google Fonts, so your browser asks Google for that file.</li>' : '') +
       '<li>Reset in Settings clears everything the game has stored.</li>' +
       '</ul>',

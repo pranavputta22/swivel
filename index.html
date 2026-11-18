@@ -42,6 +42,20 @@
 })();
 </script>
 <script>
+/* In the iPhone app the page opens on a title card. Until the card is up, only the night sky shows:
+   without this the menu could be painted for an instant first, its icons flashing at the left. */
+(function () {
+  try {
+    var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.swivel;
+    if (h && !window.__noTitleCard) {
+      document.documentElement.className += ' tc-pending';
+      // (a safety: should the game never start, the page is not left blank)
+      setTimeout(function () { document.documentElement.classList.remove('tc-pending'); }, 5000);
+    }
+  } catch (e) { /* the page shows as usual */ }
+})();
+</script>
+<script>
 /* The safety net. If the game's own code ever fails, the player is told, nothing they have earned
    is lost, and a short note of what happened is kept on the device so it can be sent to whoever
    looks after the game. It is set up before everything else, so a failure while starting is caught too. */
@@ -250,15 +264,34 @@ h1, h2, h3, p { margin: 0; }
 .btn.dark.solid { background: var(--black); color: #fff; border-color: var(--black); }
 
 /* ---------- home ---------- */
-/* The title stands on the sky. The menu is five plates; the one to press first is gold. */
+/* The title stands on the sky. The menu is four plates, the one to press first in gold, and two squares:
+   the map beside Continue (every level) and the album beside Daily (every picture). */
 #home { justify-content: flex-start; }
-.marquee { margin-top: clamp(0px, 3vh, 26px); padding: 0 6px; }
+.marquee { margin-top: clamp(0px, 3vh, 26px); padding: 0 6px; text-align: center; }
 .marquee h1 { font-size: clamp(64px, 21vw, 96px); font-weight: 900; line-height: .9; letter-spacing: -.03em; color: #FFF3D6; }
 /* The star stands on the stem of the i. The box round the i is the letter's own width: the title's tightened
    spacing would otherwise take a sliver off its right side, and the star, centred on the box, would sit left of the stem. */
 .marquee .ih { position: relative; display: inline-block; letter-spacing: 0; margin-right: -.03em; }
 .marquee .ih svg { position: absolute; left: 50%; top: -.035em; width: .3em; height: .3em; margin-left: -.15em; fill: var(--paint); overflow: visible; }
 .marquee p { margin-top: 8px; font-size: 17px; color: var(--text-2); }
+/* the title card the iPhone app opens with: the title alone, centred, while a rocket bursts behind it */
+.tc-pending #app > :not(#titlecard) { visibility: hidden; }
+#titlecard { position: absolute; inset: 0; z-index: 1000; overflow: hidden; background: #141838; transition: opacity .3s ease-out; }
+#titlecard.out { opacity: 0; pointer-events: none; }
+#titlecard .tc-title { position: absolute; left: 0; right: 0; top: 40%; transform: translateY(-50%); margin: 0; padding: 0 16px; text-align: center; z-index: 40; }
+#titlecard .tc-title h1 { font-size: clamp(76px, 26vw, 120px); }
+#titlecard .tc-title > * { opacity: 0; }
+#titlecard.shown .tc-title h1 { animation: tc-pop .42s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes tc-pop { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: none; } }
+#titlecard .tc-scene { z-index: 1; }
+#titlecard .tc-rocket { position: absolute; width: 66px; height: 66px; margin: -33px 0 0 -33px; z-index: 30; --cell: 66px; animation: tc-rise var(--dur) cubic-bezier(.3, .6, .5, 1) both; }
+#titlecard .tc-rocket .piece { width: 100%; height: 100%; }
+#titlecard .tc-trail { position: absolute; width: 6px; margin-left: -3px; height: var(--rise); border-radius: 3px; z-index: 29;
+  background: linear-gradient(180deg, rgba(255, 233, 168, .9), rgba(255, 181, 46, .35) 40%, rgba(255, 181, 46, 0));
+  transform-origin: 50% 100%;
+  animation: tc-trail var(--dur) cubic-bezier(.3, .6, .5, 1) both, trail-fade .35s ease-out var(--dur) forwards; }
+@keyframes tc-rise { from { transform: translateY(var(--rise)); } to { transform: none; } }
+@keyframes tc-trail { from { transform: scaleY(0); } to { transform: none; } }
 .menu { margin-top: clamp(12px, 3vh, 28px); display: flex; flex-direction: column; gap: 10px; }
 .dest {
   display: grid; grid-template-columns: 46px 1fr auto; align-items: center; column-gap: 14px;
@@ -270,10 +303,11 @@ h1, h2, h3, p { margin: 0; }
 .dest .dplate { width: 46px; height: 46px; position: relative; display: grid; place-items: center; }
 .dest .dname { font-size: 21px; font-weight: 700; line-height: 1.1; }
 .dest .dinfo { font-size: 14px; color: var(--text-2); text-align: right; line-height: 1.25; max-width: 15ch; }
-.dest.main { min-height: 78px; background: var(--paint); color: #171A1E; }
-.dest.main .dplate { width: 54px; height: 54px; margin-left: -4px; }
-.dest.main .dname { font-size: 27px; font-weight: 900; }
-.dest.main .dinfo { color: #171A1E; font-weight: 700; }
+.dest.main { min-height: 78px; background: var(--paint); color: #171A1E; grid-template-columns: 46px minmax(0, 1fr); row-gap: 4px; align-content: center; }
+.dest.main .dplate { width: 54px; height: 54px; margin-left: -4px; grid-row: 1 / 3; }
+.dest.main .dname { font-size: 27px; font-weight: 900; line-height: 1; }
+/* where the gold plate leads stands under its name: on one line, whatever the world is called */
+.dest.main .dinfo { grid-column: 2; max-width: none; text-align: left; font-size: 15px; font-weight: 700; line-height: 1.1; color: #171A1E; white-space: nowrap; }
 svg.pic { display: block; width: 34px; height: 34px; fill: var(--paint); }
 svg.pic .dim { fill: rgba(255, 255, 255, .16); }
 /* the line at the foot of the menu stands on a dark tag, so it reads over a skyline's lit windows too */
@@ -519,6 +553,12 @@ svg.pic .dim { fill: rgba(255, 255, 255, .16); }
 .lv.locked .disc { background: rgba(11, 14, 38, .55); box-shadow: inset 0 0 0 2px rgba(167, 174, 219, .25); }
 .lv.locked b { color: rgba(167, 174, 219, .5); }
 .lv.locked .nm { color: rgba(167, 174, 219, .6); }
+/* a level of the full game: shut like the others, with a small padlock, and a tap opens the card */
+.lv.paid { cursor: pointer; }
+.lv.paid .disc::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 10px; margin: -2px 0 0 -6px; border-radius: 2px; background: rgba(255, 197, 51, .75); }
+.lv.paid .disc::before { content: ''; position: absolute; left: 50%; top: 50%; width: 8px; height: 9px; margin: -10px 0 0 -6px; border: 2.5px solid rgba(255, 197, 51, .75); border-bottom: 0; border-radius: 6px 6px 0 0; }
+.lv.paid b { opacity: 0; }
+.wsign .buy { grid-column: 1 / -1; justify-self: start; margin-top: 10px; min-height: 44px; font-size: 16px; padding: 0 18px; background: var(--paint); border-color: var(--paint); color: #171A1E; }
 .lv.show.locked .disc { box-shadow: inset 0 0 0 2.5px rgba(255, 197, 51, .4); }
 .lv.fresh .spark { animation: fresh .5s cubic-bezier(.3, 1.6, .5, 1) .35s both; }
 @keyframes fresh { from { transform: scale(.2); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -553,6 +593,8 @@ svg.pic .dim { fill: rgba(255, 255, 255, .16); }
 .rules .ico { width: 54px; height: 54px; position: relative; }
 .rules b { font-weight: 700; }
 .rules li.note { display: block; font-size: 13px; opacity: .85; }
+.rules .ico.pic { display: grid; place-items: center; }
+.rules .ico.pic svg.pic { width: 42px; height: 42px; }
 .opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 2px; border-top: 3px solid rgba(255, 255, 255, .9); font-size: 18px; font-weight: 700; }
 .opt:first-of-type { margin-top: 16px; }
 .opts { margin-top: 16px; }
@@ -568,6 +610,12 @@ svg.pic .dim { fill: rgba(255, 255, 255, .16); }
 .pick:active { background: rgba(0, 0, 0, .12); }
 .pick b { font-size: 22px; font-weight: 700; }
 .pick span { font-size: 14px; opacity: .92; text-align: right; }
+.pick.paid b { opacity: .6; }
+.pick.paid i { font-style: normal; font-weight: 700; color: var(--paint); }
+.opt .have { font-size: 16px; color: var(--paint); }
+/* the full game's card: a gold tick before each thing it adds */
+.rules.fullgame .ico.tick { width: 34px; height: 34px; border-radius: 50%; background: var(--paint); }
+.rules.fullgame .ico.tick::after { content: ''; position: absolute; left: 11px; top: 8px; width: 9px; height: 15px; border: solid #171A1E; border-width: 0 4px 4px 0; transform: rotate(45deg); }
 .fine { margin-top: 14px; font-size: 13px; opacity: .85; }
 
 #confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
@@ -800,20 +848,29 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
 .wintotal i { font-style: normal; margin-left: 6px; padding: 1px 7px; border-radius: 9px; background: var(--paint); color: #1b1436; }
 .wintotal .tally { color: inherit; }
 
-/* ---------- the album of daily pictures ---------- */
+/* ---------- the menu's two squares, and the album of daily pictures ---------- */
+/* Each square stands beside the plate it belongs to and shows the whole of what that plate plays one of:
+   the map of every level beside Continue, the album of every picture beside Daily. */
 .dest-row { display: flex; gap: 10px; }
 .dest-row .dest { flex: 1; min-width: 0; }
 .side {
-  flex: none; width: 62px; border: 0; border-radius: 18px; cursor: pointer; font-family: inherit;
+  flex: none; width: 74px; border: 0; border-radius: 18px; cursor: pointer; font-family: inherit;
   background: #232B66; color: #FFF3D6; box-shadow: 0 4px 0 rgba(0, 0, 0, .34);
-  display: grid; place-items: center; align-content: center; gap: 5px; padding: 0;
+  display: grid; place-items: center; align-content: center; gap: 6px; padding: 0;
   transition: transform .08s, box-shadow .08s;
 }
 .side:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .34); }
-.side .glyph { display: grid; grid-template-columns: 11px 11px; gap: 3px; }
+.side span.glyph { display: grid; grid-template-columns: 11px 11px; gap: 3px; }
 .side .glyph i { width: 11px; height: 11px; border-radius: 3px; background: rgba(255, 255, 255, .2); }
 .side .glyph i.on { background: var(--paint); }
-.side b { font-size: 12px; font-weight: 800; line-height: 1; color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* the map's mark is the map in small: levels along a path that turns back on itself, two of them
+   cleared, the next one ringed and one still shut */
+.side svg.glyph { width: 28px; height: 28px; overflow: visible; }
+.side .glyph .way { fill: none; stroke: rgba(255, 255, 255, .3); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.side .glyph .done { fill: var(--paint); }
+.side .glyph .next { fill: #232B66; stroke: var(--paint); stroke-width: 2.2; }
+.side .glyph .shut { fill: #4A5185; }
+.side b { font-size: 13px; font-weight: 800; line-height: 1; }
 .side.closed { opacity: .5; }
 .side.nope, .tile.nope { animation: nope .32s; }
 #album h2 { font-size: 24px; font-weight: 900; }
@@ -855,6 +912,8 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
 #home.waiting .menu { opacity: 0; visibility: hidden; transition: none; }
 .dest.closed { opacity: .5; }
 .dest.closed .dplate { filter: grayscale(1); }
+.dest.wake, .side.wake { animation: wake .62s ease-out var(--wake, 0ms) both; }
+@keyframes wake { 0%, 100% { transform: none; filter: none; } 32% { transform: scale(1.035); filter: brightness(1.45); } }
 .dest.nope { animation: nope .32s; }
 @keyframes nope { 20% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 80% { transform: translateX(-3px); } }
 /* a turning arrow on each rocket the next launch will turn */
@@ -941,6 +1000,13 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
   .dest .dplate { width: 42px; height: 42px; }
   .dest .dname { font-size: 20px; }
   .dest .dinfo { font-size: 13px; }
+  .dest.main { grid-template-columns: 42px minmax(0, 1fr); }
+  .dest.main .dplate { width: 46px; height: 46px; margin-left: -2px; }
+  .dest.main .dname { font-size: 24px; }
+  .dest.main .dinfo { font-size: 14px; }
+  .dest-row .dest { padding-right: 12px; column-gap: 8px; }
+  .side { width: 62px; }
+  .side b { font-size: 12px; }
   .ctl { font-size: 16px; gap: 8px; }
   .lv { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
   .lv.show { width: 58px; height: 58px; margin: -29px 0 0 -29px; }
@@ -999,7 +1065,14 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
   .side { width: 50px; border-radius: 14px; }
   .dest, .dest.main { min-height: 50px; }
   .dest .dplate, .dest.main .dplate { width: 38px; height: 38px; margin: 0; }
+  .dest.main { row-gap: 2px; }
   .dest.main .dname { font-size: 21px; }
+  .dest.main .dinfo { font-size: 13px; }
+  .side { gap: 3px; }
+  .side svg.glyph { width: 22px; height: 22px; }
+  .side span.glyph { grid-template-columns: 9px 9px; gap: 2px; }
+  .side .glyph i { width: 9px; height: 9px; }
+  .side b { font-size: 11px; }
 }
 /* the menu on a tablet held sideways: the title stands on the left, the plates on the right */
 @media (orientation: landscape) and (min-height: 470px) and (max-height: 560px) {
@@ -1045,13 +1118,15 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
       <p>Every launch turns its neighbors.</p>
     </div>
     <nav class="menu" aria-label="Main menu">
-      <button class="dest main" id="go-continue"><span class="dplate" data-d="0"></span><span class="dname">Play</span><span class="dinfo" id="info-continue"></span></button>
+      <div class="dest-row">
+        <button class="dest main" id="go-continue"><span class="dplate" data-d="0"></span><span class="dname">Play</span><span class="dinfo" id="info-continue"></span></button>
+        <button class="side" id="go-levels"><svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="way" d="M6 21.5H22V7H6"/><circle class="done" cx="6" cy="21.5" r="4.2"/><circle class="done" cx="22" cy="21.5" r="4.2"/><circle class="next" cx="22" cy="7" r="3.3"/><circle class="shut" cx="6" cy="7" r="4.2"/></svg><b>Map</b></button>
+      </div>
       <div class="dest-row">
         <button class="dest" id="go-daily"><span class="dplate" id="daily-pic"></span><span class="dname">Daily</span><span class="dinfo" id="info-daily"></span></button>
-        <button class="side" id="go-album"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b id="info-album"></b></button>
+        <button class="side" id="go-album"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Album</b></button>
       </div>
       <button class="dest" id="go-endless"><span class="dplate" data-d="1"></span><span class="dname">Endless</span><span class="dinfo" id="info-endless"></span></button>
-      <button class="dest" id="go-levels"><span class="dplate" data-d="3"></span><span class="dname">Map</span><span class="dinfo" id="info-levels"></span></button>
       <button class="dest" id="go-draw"><span class="dplate" id="draw-pic"></span><span class="dname">Draw</span><span class="dinfo" id="info-draw"></span></button>
     </nav>
     <p class="kerb" id="kerb"></p>
@@ -1910,7 +1985,7 @@ button.tally { border: 0; background: none; font-family: inherit; cursor: pointe
 </script>
 <script>
 /* Generated by tools/build_levels.js. Every level is solver-checked. */
-var SWIVEL_WORLDS = [{"id":"streets","name":"Back Yard","blurb":"Learn the turn.","levels":[{"s":".../.R./...","tip":"Tap the rocket to launch it."},{"s":".../R.U/...","tip":"A rocket cannot fly through another one. Clear its path first."},{"s":".../RUL/...","tip":"A launch turns the rockets beside it: a quarter turn, clockwise."},{"s":".../LR./UU.","tip":"A turn can block a rocket too. Rewind, then try the other order."},{"s":"..U./.DU./..../..LD","tip":"Press and hold a rocket to see what it would do."},{"s":"..D./.UU./.LDR/....","tip":"Stuck? Hint shows a safe move. A clear with a hint earns one star."},{"s":"..../.LUR/.LRD/...U","tip":"Three stars are for a clean run: no undo, no hint."},{"s":"...U/..UD/..LR/..UU"},{"s":"..L./..../.URL/.LLD"},{"s":"...../.DUR./.R.L./.RDU./.....","name":"Catherine Wheel"},{"s":"..U../.DLD./.LDL./.RUD./..R.."},{"s":".LU../DU.../.RD.R/..DRL/...R."},{"s":"...RL/...LR/R.R.D/UR.../UR..."},{"s":"LR.../RL.../LU.../..RUD/...UD"},{"s":"..L../LLD../DLRLU/..URU/..U.."},{"s":"LLLUL/..L../..D../..D../RLRRU"},{"s":".R.../.LRLU/.LDU./DLRU./...R."},{"s":"..D../.UDR./LDRDD/.RLR./..D.."},{"s":"DDLDR/..L../.D.../.RUU./.LRD."},{"s":".D.D./UDLRU/.D.U./LUDLU/.D.R.","name":"Crossette"}]},{"id":"fastlane","name":"Rooftops","blurb":"Lit rockets go by themselves.","levels":[{"s":".../>.U/...","tip":"The black rocket has a lit fuse. You cannot tap it: it goes by itself as soon as its path is clear."},{"s":".U./L<./...","tip":"A turn can clear a lit rocket’s path too."},{"s":"...../>.>.R/.....","tip":"Each lit rocket that goes can free the next. One tap, three gone."},{"s":"U.../DR../^^.R/...."},{"s":"D.../.UvD/.R<./.R.."},{"s":"..../..Uv/.v.R/.>LD"},{"s":"L><.R/.L.../.L.../.L..U/>U..D"},{"s":"U..../..DU./.R^<U/.L^R./..R.."},{"s":"...../..vLU/R>vDD/LDU../....."},{"s":"...../.DRU./>^^<R/.RLD./.....","name":"Volley"},{"s":"UvU../L.RL./..U../.>U.U/..LRR"},{"s":"...L</.U..D/Dv<LU/U..D./LR..."},{"s":"..vU./..vvD/U...R/U.RD./LD^.."},{"s":".L.R./RU.<R/v^<LL/...../R...D"},{"s":"U..../^v<../LU.UR/>..UL/RU.../.L..L"},{"s":"...../.URD./v>.^U/UR.<R/U...R/L...D"},{"s":"...../..R../LLRvU/vLD<R/DR.UL/....."},{"s":"v...R/^...U/DULDv/.UUR./L.L.R/....."},{"s":".DUL./.vv^./...../RR.^U/.RUR./.R.D."},{"s":"R.U.U/Uv>Dv/v.L.^/D^^D</D.R.L","name":"Rapid Fire"}]},{"id":"crossroads","name":"Riverside","blurb":"Fuller boards, longer chains.","levels":[{"s":"L.UR./..UD./..LU./UL.../.LLDL"},{"s":".U.L./.LDR./.LDD./.DUL./.D.D."},{"s":"LU.D./.DU../..LU./ULUR./..LL."},{"s":"....R/...../..RUU/ULU.R/URDLR"},{"s":".RLL./URL../..L../.LUUR/...DL"},{"s":"DU.RL/DU.DU/...../LD.UR/DR.RL"},{"s":"LDURD/D..RU/R..R./DRUUR/...R."},{"s":"UU.../.U.../.LL.U/DRUUL/RUUUD"},{"s":"...../DLURL/DLUUU/DL.RR/L...R"},{"s":"UL.RL/RL.LD/..L../LL.RL/DR.RR","name":"Peony"},{"s":"ULLUD/UD.../LU.../.D.../RL..R/DLRDL"},{"s":"UD.../DL.UR/DL<D./.RL.R/^.DRD/....R"},{"s":"..DU./.D<LL/.>.LU/.L.LD/.DRUD/..LR."},{"s":"..D../LLRDU/.LRL./.RUR./LLU<^/..D.."},{"s":"...../...../L>ULR/RLRDU/DUUUL/.D^U."},{"s":"UR>.UR/U...../RvLU.U/L.DU../.vDL../.LRDDD"},{"s":".DLU../.RDD../RR^v<./DRURR./.DUU../.URD.."},{"s":"...Lv./.vDRLL/.LRUL./.U^RU./UDLRD./.DL..."},{"s":".D.DU./.RLUU./DvR.R./L<D.D./.DR^L./.R.LD."},{"s":"DDRLUD/R....R/D.UD.L/L.DU.U/L....R/RDLDRU","name":"Ring Shell"}]},{"id":"roadworks","name":"Fairground","blurb":"Crates block the way for good.","levels":[{"s":"..../R#../L.../....","tip":"Crates never move. A rocket facing one needs a neighbor to turn it."},{"s":"..../R..U/DRUR/LL../#..."},{"s":"#.DL/...R/DD../.L../.UD."},{"s":"L.../DDLU/#..U/..../LR.."},{"s":"...U/..../.DU./LRLL/..#R"},{"s":"..D.R/LD..U/RLR../LUD#./....#"},{"s":"..R../#.DU./.#UL./LRU../R.DR."},{"s":"DU.../U.LL./#.RDL/.#..D/RD..."},{"s":"...L./#..DR/L.LUU/D#.DU/....U"},{"s":".RUL./.R.R./##.##/.L.R./.DRU.","name":"The Gap"},{"s":".LDL./.L#D./.L.R./.R.U./.v#R./.>DU."},{"s":".U.../LD..U/DL.U./DLRU./..RR./#U..#"},{"s":"L#.R./DU.../R>L../>LR../LR.../R#.D."},{"s":".#.../LU.../DULUU/DL>vL/...UR/...#."},{"s":"L.RL#/U.DLR/D...L/RU..R/U..../D..#."},{"s":".UD<LU/.#...D/UD#UR./U..U../...L../.RD^#D"},{"s":"LLUL../R..R../#R..LU/.D#..L/.RR>.U/...#>R"},{"s":"..LDUU/..D.DD/#.UURR/.#U..U/..#.../RRD..R"},{"s":"....../LLU.#./#L..../DLR.U./UR<UU./RR>#R."},{"s":"RU..LR/L#UD#D/.RDDU./.URLR./U#DU#R/LD..RR","name":"Stockpile"}]},{"id":"oneway","name":"Harbor","blurb":"Bolted rockets never turn.","levels":[{"s":"..../rUL./....","tip":"Bolted rockets never turn. They still turn their neighbors."},{"s":"UD..L/uR#.r/.R..D/.RDD./....."},{"s":"DUR../UUuL./Dd.D#/..R../....."},{"s":"uLD../DLLUR/..RR#/..l../....."},{"s":"...../#..../LRUDU/ldL../R..UR"},{"s":".U.../#L..#/l.u.R/lLD.U/.Ud../ULr.."},{"s":"..Lr./..DU./..#.R/U#UU./L...D/URUu."},{"s":"lDl#U/D.L.U/UU.Lu/L...#/...../.LR.."},{"s":"r..R./..Du./..DUR/#UR../L.#.U/RrR.."},{"s":"..r../.DLU./dDDRd/.DRU./..u..","name":"Diamond"},{"s":"ULl.#./..lL.D/..LlDU/..UURR/...#../RR..R."},{"s":"DUD#.R/..LLR./..uUuU/....RR/.#..U./l...Uu"},{"s":"....uD/r....D/R..R../#DLL../lLUU../D.#DdU"},{"s":"..>.r./..LUuU/LD.#R</.L#R../UrR.../.dD..."},{"s":"URu.DU/d.ULL./..DRD#/.uDD../.R..R./...#.."},{"s":".URu.#/lDv.UU/#.R.../.^.lL./.DDURU/#.U..D"},{"s":"D.DD../d.LL#R/RLDD.U/Ll.L.R/.D.D#./.D#..."},{"s":"..U#U./.Lv<L./DURUL./#RddR./RDRR#./......"},{"s":"#....R/R..ur./lU.LD./>RU.../>UuL../#RRRU#"},{"s":"uDU#.R/...D.L/DU.R.r/l.U.DU/D.R.../R.#UUd","name":"Battery"}]},{"id":"hairpins","name":"Mountain Lodge","blurb":"Twin boosters turn things twice.","levels":[{"s":"..../RN../.U../....","tip":"Twin boosters turn their neighbors twice."},{"s":"L.L#N/E...L/..LN./.DRDR/.U..."},{"s":"#URL./DDSU./.W.../UR.../WR..."},{"s":"LD..L/EU.../WLDL./.LD../D...#"},{"s":"..U../L.DD./S..LE/.N#../WUD.U"},{"s":"#..NU/.U..#/EDUN./.DL../.WNS./.SRN."},{"s":"...LL/#...N/..ULD/RR..#/UR.LE/R.U.D"},{"s":".SDE./.L#SD/..LUR/....U/U...L/NDR#."},{"s":"SUDDD/US.#./UUU../D...L/.#DR./..D.."},{"s":"LUDN./...D./.SLD./.R.../.UUUE/....R","name":"Serpent"},{"s":".#WL../LNR.../.URl.U/.LRv.D/SUL.../.#L<.."},{"s":"EUR.../..RLU./..RW#./.lDL../DE.SU./..uRd#"},{"s":".LSU../.#..../NR...U/NL.#RU/EU..WU/DRRR.."},{"s":"..Lu../.#LR#./.RE>S./.DSLU./.S..N./UU..^D"},{"s":"ERU..#/LDL.../RRN.../D>N.../L<E.../URD..#"},{"s":".WD>.#/WRDLR./.DE#../..L.Ur/..#R.R/...Rvd/...DWr"},{"s":"ND..../R>R..#/ERRR../.DRD#./LDlN../UDD..#/dU...."},{"s":".#LS../D.LEU./D..DDE/LL...L/DER.#L/#.U..U/..SR.."},{"s":"..LLND/..#LR./...LW./UDS#<r/...^R./..#UL./..lDWR"},{"s":"WLDLDW/.....R/SDLE.U/D..L.L/R....R/SRURUW","name":"Pinwheel"}]},{"id":"spaghetti","name":"City Square","blurb":"Everything at once.","levels":[{"s":"...../.L#u./DDN<</.DDE./.L#d."},{"s":".U#R./.W.L./.^Lu./.DUr./.>.r./.u#R."},{"s":"#....u/d.LU#./WRRSW./...Dl./.L.<../S..UD#"},{"s":"D<.ULR/Ll.#.E/.D.L<v/L.u..#/LS..../RR.#.."},{"s":"WLuvU#/..u^.r/.LLDUU/...U^L/.#.R.R/#....D"},{"s":"LL...R/L.#DvR/...EUR/...L#N/...urL/U.#DU</lN...D"},{"s":"U.ULDD/.L..NU/R...RU/SR.l#R/l...UU/...RR#/.#U.D."},{"s":"..LUU./.#.Wv./u..#../LS^v.u/uLDS../.L.R.U/LULR#."},{"s":"><.LWL/v..D.u/..#.ND/.#..UD/..#.ER/d..L.U/ND.DdR"},{"s":"DN...LD/>v#.#LS/..UUU../..W.L../..EDU../^N#.#UR/^D...UR","name":"Barrage"},{"s":".l<.../#.#.uR/RdDLLD/v^..>L/LSUWRU/RL.#.#/...DE."},{"s":"R#.rUR/D.#LRr/L..lD./UR..U./L>vvU#/....DR/D.<#.D"},{"s":"URULRU/uD..^</D#..#D/....../D#..#U/R>..NU/LL^DNR"},{"s":"U....U/R#Uv#U/R.RS.U/Wl..Ll/U.Sr.U/L#LR#U/U....R"},{"s":"LLru../#D.L.#/.....D/..#.UU/RR.lL#/RU.EUd/SURSDU"},{"s":".r.DNL./.#..NUR/DER.#.#/LDRUDNR/NDLN.../U.RD.../LR..#.."},{"s":"#...ur./DLD.SUR/DW...Nv/#D..#.R/DR...NL/REr.UDD/#...<D."},{"s":"LL#.#rR/R<LLD^^/UrULNDU/U.LUD.L/#.E.D.#/......./...L..."},{"s":"....#../....DUS/..uWRuU/..v#^>L/#DRUULU/.NRL>#./.dRRU.."},{"s":"RLDuN/^USSR/L^ULL/UDDUL/DRDWD/SRNSr","name":"Full Rack"}]},{"id":"finale","name":"Grand Finale","blurb":"The gold rocket goes last.","levels":[{"s":"U../.8./..D","tip":"The gold rocket is the finale. It will not launch until every other rocket has gone."},{"s":".../R8./DU.","tip":"Nothing gets past the gold rocket. Turn the others so they leave another way."},{"s":"DR../D.../R.../8D.."},{"s":"..U./UR4U/R.D./...."},{"s":"U6../.D../LRD./.U../LU.."},{"s":".UD./..8R/..L./..LR/.UR."},{"s":"..UR/.R.L/...L/.L.D/..L8"},{"s":"...L./.RDD4/.L.UD/..U../..DD."},{"s":"...../.D8R./L.DL./DD.U./.UD.."},{"s":"..L../.DDU./DD2UL/.LUD./..R..","name":"Chrysanthemum"},{"s":"U...U/v<#LR/.LDL./L...U/...../RU#4d"},{"s":"...R./>DUL./S4.#./LUD^D/.L.L./..#.D"},{"s":"...../..N../URDUD/#8.R#/LrR>U/L...D"},{"s":"LDN>v/2DLRL/LUUUD/...../.#.#./....."},{"s":"LLUD2U/.D..#U/...DUr/...D#./...dN^/.D..#U/NR>^SN"},{"s":".....8/...ULR/L.LL#d/v.UDD./v#U>.U/lU.U.R/.L#L.D"},{"s":"u.D#R./..WWLU/...WU^/..#ENR/...DDU/..D8LU/^.<#R."},{"s":">uU#../...DLr/...SU4/lD#UUR/...DUD/...L^R/D^D#.."},{"s":"DL..UR/RR..Ll/W...uR/.#.#R#/U...l^/><..R4/US..LS"},{"s":".NuNL./DLv^dN/UR8<EL/RR^NUl/.DDUR.","name":"Golden Willow"}]}];
+var SWIVEL_WORLDS = [{"id":"streets","name":"Back Yard","blurb":"Learn the turn.","levels":[{"s":".../.R./...","tip":"Tap the rocket to launch it."},{"s":".../R.U/...","tip":"A rocket cannot fly through another one. Clear its path first."},{"s":".../RUL/...","tip":"A launch turns the rockets beside it: a quarter turn, clockwise."},{"s":".../LR./UU.","tip":"A turn can block a rocket too. Rewind, then try the other order."},{"s":"..U./.DU./..../..LD","tip":"Press and hold a rocket to see what it would do."},{"s":"..D./.UU./.LDR/....","tip":"Stuck? Hint shows a safe move. A clear with a hint earns one star."},{"s":"..../.LUR/.LRD/...U","tip":"Three stars are for a clean run: no undo, no hint."},{"s":"...U/..UD/..LR/..UU"},{"s":"..L./..../.URL/.LLD"},{"s":"...../.DUR./.R.L./.RDU./.....","name":"Catherine Wheel"},{"s":"..U../.DLD./.LDL./.RUD./..R.."},{"s":".LU../DU.../.RD.R/..DRL/...R."},{"s":"...RL/...LR/R.R.D/UR.../UR..."},{"s":"LR.../RL.../LU.../..RUD/...UD"},{"s":"..L../LLD../DLRLU/..URU/..U.."},{"s":"LLLUL/..L../..D../..D../RLRRU"},{"s":".R.../.LRLU/.LDU./DLRU./...R."},{"s":"..D../.UDR./LDRDD/.RLR./..D.."},{"s":"DDLDR/..L../.D.../.RUU./.LRD."},{"s":".D.D./UDLRU/.D.U./LUDLU/.D.R.","name":"Crossette"}]},{"id":"fastlane","name":"Rooftops","blurb":"Lit rockets go by themselves.","levels":[{"s":".../>.U/...","tip":"The black rocket has a lit fuse. You cannot tap it: it goes by itself as soon as its path is clear."},{"s":".U./L<./...","tip":"A turn can clear a lit rocket’s path too."},{"s":"...../>.>.R/.....","tip":"Each lit rocket that goes can free the next. One tap, three gone."},{"s":"U.../DR../^^.R/...."},{"s":"D.../.UvD/.R<./.R.."},{"s":"..../..Uv/.v.R/.>LD"},{"s":"L><.R/.L.../.L.../.L..U/>U..D"},{"s":"U..../..DU./.R^<U/.L^R./..R.."},{"s":"...../..vLU/R>vDD/LDU../....."},{"s":"...../.DRU./>^^<R/.RLD./.....","name":"Volley"},{"s":"UvU../L.RL./..U../.>U.U/..LRR"},{"s":"...L</.U..D/Dv<LU/U..D./LR..."},{"s":"..vU./..vvD/U...R/U.RD./LD^.."},{"s":".L.R./RU.<R/v^<LL/...../R...D"},{"s":"U..../^v<../LU.UR/>..UL/RU.../.L..L"},{"s":"...../.URD./v>.^U/UR.<R/U...R/L...D"},{"s":"...../..R../LLRvU/vLD<R/DR.UL/....."},{"s":"v...R/^...U/DULDv/.UUR./L.L.R/....."},{"s":".DUL./.vv^./...../RR.^U/.RUR./.R.D."},{"s":"R.U.U/Uv>Dv/v.L.^/D^^D</D.R.L","name":"Rapid Fire"}]},{"id":"crossroads","name":"Riverside","blurb":"Fuller boards, longer chains.","levels":[{"s":"L.UR./..UD./..LU./UL.../.LLDL"},{"s":".U.L./.LDR./.LDD./.DUL./.D.D."},{"s":"LU.D./.DU../..LU./ULUR./..LL."},{"s":"....R/...../..RUU/ULU.R/URDLR"},{"s":".RLL./URL../..L../.LUUR/...DL"},{"s":"DU.RL/DU.DU/...../LD.UR/DR.RL"},{"s":"LDURD/D..RU/R..R./DRUUR/...R."},{"s":"UU.../.U.../.LL.U/DRUUL/RUUUD"},{"s":"...../DLURL/DLUUU/DL.RR/L...R"},{"s":"UL.RL/RL.LD/..L../LL.RL/DR.RR","name":"Peony"},{"s":"ULLUD/UD.../LU.../.D.../RL..R/DLRDL"},{"s":"UD.../DL.UR/DL<D./.RL.R/^.DRD/....R"},{"s":"..DU./.D<LL/.>.LU/.L.LD/.DRUD/..LR."},{"s":"..D../LLRDU/.LRL./.RUR./LLU<^/..D.."},{"s":"...../...../L>ULR/RLRDU/DUUUL/.D^U."},{"s":"UR>.UR/U...../RvLU.U/L.DU../.vDL../.LRDDD"},{"s":".DLU../.RDD../RR^v<./DRURR./.DUU../.URD.."},{"s":"RLLU../DDUD../...LDR/...U<U/LLUU../URR<.."},{"s":".UUR../LR^L../.>RD.D/.LDD.</LLUL../.LLD.."},{"s":"DDRLUD/R....R/D.UD.L/L.DU.U/L....R/RDLDRU","name":"Ring Shell"}]},{"id":"roadworks","name":"Fairground","blurb":"Crates block the way for good.","levels":[{"s":"..../R#../L.../....","tip":"Crates never move. A rocket facing one needs a neighbor to turn it."},{"s":"..../R..U/DRUR/LL../#..."},{"s":"#.DL/...R/DD../.L../.UD."},{"s":"L.../DDLU/#..U/..../LR.."},{"s":"...U/..../.DU./LRLL/..#R"},{"s":"..D.R/LD..U/RLR../LUD#./....#"},{"s":"..R../#.DU./.#UL./LRU../R.DR."},{"s":"DU.../U.LL./#.RDL/.#..D/RD..."},{"s":"...L./#..DR/L.LUU/D#.DU/....U"},{"s":".RUL./.R.R./##.##/.L.R./.DRU.","name":"The Gap"},{"s":".LDL./.L#D./.L.R./.R.U./.v#R./.>DU."},{"s":".U.../LD..U/DL.U./DLRU./..RR./#U..#"},{"s":"L#.R./DU.../R>L../>LR../LR.../R#.D."},{"s":".#.../LU.../DULUU/DL>vL/...UR/...#."},{"s":"L.RL#/U.DLR/D...L/RU..R/U..../D..#."},{"s":".UD<LU/.#...D/UD#UR./U..U../...L../.RD^#D"},{"s":"LLUL../R..R../#R..LU/.D#..L/.RR>.U/...#>R"},{"s":"..LDUU/..D.DD/#.UURR/.#U..U/..#.../RRD..R"},{"s":"....../LLU.#./#L..../DLR.U./UR<UU./RR>#R."},{"s":"RU..LR/L#UD#D/.RDDU./.URLR./U#DU#R/LD..RR","name":"Stockpile"}]},{"id":"oneway","name":"Harbor","blurb":"Bolted rockets never turn.","levels":[{"s":"..../rUL./....","tip":"Bolted rockets never turn. They still turn their neighbors."},{"s":"UD..L/uR#.r/.R..D/.RDD./....."},{"s":"DUR../UUuL./Dd.D#/..R../....."},{"s":"uLD../DLLUR/..RR#/..l../....."},{"s":"...../#..../LRUDU/ldL../R..UR"},{"s":".U.../#L..#/l.u.R/lLD.U/.Ud../ULr.."},{"s":"..Lr./..DU./..#.R/U#UU./L...D/URUu."},{"s":"lDl#U/D.L.U/UU.Lu/L...#/...../.LR.."},{"s":"r..R./..Du./..DUR/#UR../L.#.U/RrR.."},{"s":"..r../.DLU./dDDRd/.DRU./..u..","name":"Diamond"},{"s":"ULl.#./..lL.D/..LlDU/..UURR/...#../RR..R."},{"s":"DUD#.R/..LLR./..uUuU/....RR/.#..U./l...Uu"},{"s":"....uD/r....D/R..R../#DLL../lLUU../D.#DdU"},{"s":"..>.r./..LUuU/LD.#R</.L#R../UrR.../.dD..."},{"s":"URu.DU/d.ULL./..DRD#/.uDD../.R..R./...#.."},{"s":".URu.#/lDv.UU/#.R.../.^.lL./.DDURU/#.U..D"},{"s":"D.DD../d.LL#R/RLDD.U/Ll.L.R/.D.D#./.D#..."},{"s":"..U#U./.Lv<L./DURUL./#RddR./RDRR#./......"},{"s":"#....R/R..ur./lU.LD./>RU.../>UuL../#RRRU#"},{"s":"uDU#.R/...D.L/DU.R.r/l.U.DU/D.R.../R.#UUd","name":"Battery"}]},{"id":"hairpins","name":"Mountain Lodge","blurb":"Twin boosters turn things twice.","levels":[{"s":"..../RN../.U../....","tip":"Twin boosters turn their neighbors twice."},{"s":"L.L#N/E...L/..LN./.DRDR/.U..."},{"s":"#URL./DDSU./.W.../UR.../WR..."},{"s":"LD..L/EU.../WLDL./.LD../D...#"},{"s":"..U../L.DD./S..LE/.N#../WUD.U"},{"s":"#..NU/.U..#/EDUN./.DL../.WNS./.SRN."},{"s":"...LL/#...N/..ULD/RR..#/UR.LE/R.U.D"},{"s":".SDE./.L#SD/..LUR/....U/U...L/NDR#."},{"s":"SUDDD/US.#./UUU../D...L/.#DR./..D.."},{"s":"LUDN./...D./.SLD./.R.../.UUUE/....R","name":"Serpent"},{"s":".#WL../LNR.../.URl.U/.LRv.D/SUL.../.#L<.."},{"s":"EUR.../..RLU./..RW#./.lDL../DE.SU./..uRd#"},{"s":".LSU../.#..../NR...U/NL.#RU/EU..WU/DRRR.."},{"s":"..Lu../.#LR#./.RE>S./.DSLU./.S..N./UU..^D"},{"s":"ERU..#/LDL.../RRN.../D>N.../L<E.../URD..#"},{"s":".WD>.#/WRDLR./.DE#../..L.Ur/..#R.R/...Rvd/...DWr"},{"s":"ND..../R>R..#/ERRR../.DRD#./LDlN../UDD..#/dU...."},{"s":".#LS../D.LEU./D..DDE/LL...L/DER.#L/#.U..U/..SR.."},{"s":"..LLND/..#LR./...LW./UDS#<r/...^R./..#UL./..lDWR"},{"s":"WLDLDW/.....R/SDLE.U/D..L.L/R....R/SRURUW","name":"Pinwheel"}]},{"id":"spaghetti","name":"City Square","blurb":"Everything at once.","levels":[{"s":"...../.L#u./DDN<</.DDE./.L#d."},{"s":".U#R./.W.L./.^Lu./.DUr./.>.r./.u#R."},{"s":"#....u/d.LU#./WRRSW./...Dl./.L.<../S..UD#"},{"s":"D<.ULR/Ll.#.E/.D.L<v/L.u..#/LS..../RR.#.."},{"s":"WLuvU#/..u^.r/.LLDUU/...U^L/.#.R.R/#....D"},{"s":"LL...R/L.#DvR/...EUR/...L#N/...urL/U.#DU</lN...D"},{"s":"U.ULDD/.L..NU/R...RU/SR.l#R/l...UU/...RR#/.#U.D."},{"s":"..LUU./.#.Wv./u..#../LS^v.u/uLDS../.L.R.U/LULR#."},{"s":"><.LWL/v..D.u/..#.ND/.#..UD/..#.ER/d..L.U/ND.DdR"},{"s":"DN...LD/>v#.#LS/..UUU../..W.L../..EDU../^N#.#UR/^D...UR","name":"Barrage"},{"s":".l<.../#.#.uR/RdDLLD/v^..>L/LSUWRU/RL.#.#/...DE."},{"s":"R#.rUR/D.#LRr/L..lD./UR..U./L>vvU#/....DR/D.<#.D"},{"s":"URULRU/uD..^</D#..#D/....../D#..#U/R>..NU/LL^DNR"},{"s":"U....U/R#Uv#U/R.RS.U/Wl..Ll/U.Sr.U/L#LR#U/U....R"},{"s":"LLru../#D.L.#/.....D/..#.UU/RR.lL#/RU.EUd/SURSDU"},{"s":".r.DNL./.#..NUR/DER.#.#/LDRUDNR/NDLN.../U.RD.../LR..#.."},{"s":"#...ur./DLD.SUR/DW...Nv/#D..#.R/DR...NL/REr.UDD/#...<D."},{"s":"LL#.#rR/R<LLD^^/UrULNDU/U.LUD.L/#.E.D.#/......./...L..."},{"s":"....#../....DUS/..uWRuU/..v#^>L/#DRUULU/.NRL>#./.dRRU.."},{"s":"RLDuN/^USSR/L^ULL/UDDUL/DRDWD/SRNSr","name":"Full Rack"}]},{"id":"finale","name":"Grand Finale","blurb":"The gold rocket goes last.","levels":[{"s":"U../.8./..D","tip":"The gold rocket is the finale. It will not launch until every other rocket has gone."},{"s":".../R8./DU.","tip":"Nothing gets past the gold rocket. Turn the others so they leave another way."},{"s":"DR../D.../R.../8D.."},{"s":"..U./UR4U/R.D./...."},{"s":"U6../.D../LRD./.U../LU.."},{"s":".UD./..8R/..L./..LR/.UR."},{"s":"..UR/.R.L/...L/.L.D/..L8"},{"s":"...L./.RDD4/.L.UD/..U../..DD."},{"s":"...../.D8R./L.DL./DD.U./.UD.."},{"s":"..L../.DDU./DD2UL/.LUD./..R..","name":"Chrysanthemum"},{"s":"U...U/v<#LR/.LDL./L...U/...../RU#4d"},{"s":"...R./>DUL./S4.#./LUD^D/.L.L./..#.D"},{"s":"...../..N../URDUD/#8.R#/LrR>U/L...D"},{"s":"LDN>v/2DLRL/LUUUD/...../.#.#./....."},{"s":"LLUD2U/.D..#U/...DUr/...D#./...dN^/.D..#U/NR>^SN"},{"s":".....8/...ULR/L.LL#d/v.UDD./v#U>.U/lU.U.R/.L#L.D"},{"s":"u.D#R./..WWLU/...WU^/..#ENR/...DDU/..D8LU/^.<#R."},{"s":">uU#../...DLr/...SU4/lD#UUR/...DUD/...L^R/D^D#.."},{"s":"DL..UR/RR..Ll/W...uR/.#.#R#/U...l^/><..R4/US..LS"},{"s":".NuNL./DLv^dN/UR8<EL/RR^NUl/.DDUR.","name":"Golden Willow"}]}];
 if (typeof module === 'object' && module.exports) module.exports = SWIVEL_WORLDS;
 
 </script>
@@ -2104,7 +2179,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     };
   })();
   // what the app keeps a copy of: the record, the levels the player has drawn, and whether they are new
-  var STORE_KEYS = TRIAL ? ['swivel.trial', 'swivel.trial.draw', 'swivel.trial.seen'] : ['swivel.v2', 'swivel.draw', 'swivel.seen'];
+  var STORE_KEYS = TRIAL ? ['swivel.trial', 'swivel.trial.draw', 'swivel.trial.seen', 'swivel.trial.gate'] : ['swivel.v2', 'swivel.draw', 'swivel.seen', 'swivel.gate'];
   // The page's own storage came back empty and the app still has its copy: it is put back first,
   // so everything below finds the player as they left the game.
   (function restore() {
@@ -2145,6 +2220,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     if (d.sound === false) out.sound = false;
     if (d.haptics === false) out.haptics = false;
     if (d.music === false) out.music = false;
+    if (typeof d.lastTier === 'string' && /^[a-z]{1,12}$/.test(d.lastTier)) out.lastTier = d.lastTier;
     // (a picture's id is checked against the pictures when the album is drawn: they are not loaded yet here)
     var al = plain(d.album);
     for (k in al) {
@@ -2191,6 +2267,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
         save.sound = d.sound !== false;
         save.haptics = d.haptics !== false;
         save.music = d.music !== false;
+        save.lastTier = d.lastTier || '';
         save.daily = d.daily;
         save.endless = d.endless;
         save.album = d.album;
@@ -2459,6 +2536,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   // ---------- sound ----------
   // The game's sounds are the kind that play over the player's own music and keep quiet when the
   // phone's silent switch is on. Where the browser lets a page say so, it is said outright.
+  // (Inside the iPhone app the app sets the same thing, and the page saying it too changes nothing.)
   try { if (navigator.audioSession && navigator.audioSession.type !== undefined) navigator.audioSession.type = 'ambient'; } catch (e) { /* an older browser */ }
   var actx = null, noiseBuf = null, lastStage = null;
   // Everything the game plays, sounds and music alike, leaves through one last stage: a single
@@ -3101,8 +3179,102 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     for (var k = wi; k < WORLDS.length; k++) if (solvedIn(k)) return true;
     return false;
   }
+  // ---------- the full game ----------
+  // Free: the first three worlds, the first three levels of the fourth, the Daily and its album,
+  // Draw and shared levels, and Endless on its two easier difficulties. One purchase, made in the
+  // app, opens the rest, and every world added later. The page only ever asks the app to sell it and
+  // hears back what the App Store said; it never sees a payment.
+  // A player who had already played past the free part when this version first ran on their phone
+  // keeps all of it (nothing they had is taken away). The browser versions sell nothing: they say
+  // where the full game is.
+  var FREE_WORLDS = 3, PREVIEW = 3, FREE_TIERS = 2;
+  var STORE_URL = 'https://apps.apple.com/app/id6834924690';
+  var GATE_KEY = TRIAL ? 'swivel.trial.gate' : 'swivel.gate', GATE_SEEN = TRIAL ? 'swivel.trial.gateseen' : 'swivel.gateseen';
+  var full = { owned: false, legacy: false, price: '', waiting: false, btn: null };
+  function isFreeLevel(wi, li) { return wi < FREE_WORLDS || (wi === FREE_WORLDS && li < PREVIEW); }
+  function hasFull() { return TRIAL || full.owned || full.legacy; }
+  function freeLevels() { var n = 0; for (var wi = 0; wi < WORLDS.length; wi++) for (var li = 0; li < WORLDS[wi].levels.length; li++) if (isFreeLevel(wi, li)) n++; return n; }
+  // (a price as the App Store wrote it, for the player's own country and currency)
+  function cleanPrice(p) { return typeof p === 'string' && p.length <= 24 ? p.replace(/[<>&"]/g, '') : ''; }
+  (function () {
+    var g = shell.given && shell.given.full;
+    if (g && typeof g === 'object') { full.owned = g.owned === true; full.price = cleanPrice(g.price); }
+    var mark = null;
+    try { mark = window.localStorage.getItem(GATE_KEY); } catch (e) { mark = null; }
+    if (mark !== '1' && mark !== 'legacy') {
+      mark = '1';
+      for (var wi = 0; wi < WORLDS.length && mark === '1'; wi++) for (var li = 0; li < WORLDS[wi].levels.length; li++) if (!isFreeLevel(wi, li) && starsOf(wi, li)) { mark = 'legacy'; break; }
+      try { window.localStorage.setItem(GATE_KEY, mark); } catch (e) { /* storage can be missing */ }
+    }
+    full.legacy = mark === 'legacy';
+  })();
+  // what the App Store said: { owned, price, result }, result one of bought, restored, none,
+  // pending, cancelled, failed, or nothing when the app is only passing on a change
+  window.__swivelFull = function (text) {
+    if (!shell.on) return false;
+    var d = null;
+    try { d = JSON.parse(String(text)); } catch (e) { d = null; }
+    if (!d || typeof d !== 'object') return false;
+    var had = hasFull();
+    full.owned = d.owned === true;
+    if (cleanPrice(d.price)) full.price = cleanPrice(d.price);
+    var r = typeof d.result === 'string' ? d.result : '', btn = full.btn && full.btn.isConnected ? full.btn : null;
+    if (r) full.waiting = false;
+    if (!had && hasFull()) { thankFull(); refreshScreen(); }
+    else if (had && !hasFull()) refreshScreen(); // (a purchase refunded)
+    else if (btn && r) {
+      btn.disabled = false;
+      btn.textContent = r === 'pending' ? 'Waiting for approval' : r === 'none' ? 'No purchase found' : r === 'failed' ? 'App Store unreachable. Try again' : buyLabel();
+    }
+    return true;
+  };
+  function buyLabel() { return full.price ? 'Get it for ' + full.price : 'Get the full game'; }
+  function refreshScreen() {
+    if (current === 'home') renderHome();
+    else if (current === 'levels') renderLevels();
+  }
+  // The card that says what the full game is. It is only ever opened by the player: from the map's
+  // gate, a locked Endless difficulty, Continue once the free levels are done, Settings, and once,
+  // the win that reaches the gate.
+  function openFull() {
+    var more = totalLevels() - freeLevels(), worlds = WORLDS.length - FREE_WORLDS;
+    var body = '<h2>The full game</h2>' +
+      '<ul class="rules fullgame">' +
+      '<li><span class="ico tick"></span><span><b>' + more + ' more levels</b> in ' + worlds + ' worlds, with bolted rockets, twin boosters and the gold rocket.</span></li>' +
+      '<li><span class="ico tick"></span><span><b>Endless on Hard and Expert.</b></span></li>' +
+      '<li><span class="ico tick"></span><span><b>Every world added later.</b></span></li>' +
+      '<li class="note">One purchase. No ads, no subscription' + (shell.on ? ', and shared with your family.' : '.') + '</li>' +
+      '</ul>';
+    if (!shell.on) {
+      openSheet('blue', body.replace('<h2>The full game</h2>', '<h2>The full game</h2><p class="lede">It is in Swivel for iPhone and iPad, free to try.</p>'), [
+        { label: 'Get it on the App Store', solid: true, act: function () { var a = document.createElement('a'); a.href = STORE_URL; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); } },
+        { label: 'Not now', act: function () {} }
+      ], true);
+      return;
+    }
+    openSheet('blue', body, [
+      { label: full.waiting ? 'Opening the App Store' : buyLabel(), solid: true, keep: true, act: function (btn) {
+        if (full.waiting) return;
+        full.waiting = true; full.btn = btn; btn.textContent = 'Opening the App Store';
+        shell.post('buy', null);
+      } },
+      { label: 'Restore purchases', keep: true, act: function (btn) {
+        if (full.waiting) return;
+        full.waiting = true; full.btn = btn; btn.textContent = 'Checking';
+        shell.post('restore', null);
+      } },
+      { label: 'Not now', act: function () {} }
+    ], true);
+  }
+  function thankFull() {
+    openSheet('blue', '<h2>Thank you</h2><p class="lede">Every level is open now, and so is every world still to come.</p>', [
+      { label: 'Got it', solid: true, act: function () {} }
+    ], true);
+  }
+
   function levelOpen(wi, li) {
     if (openAll) return true;
+    if (!isFreeLevel(wi, li) && !hasFull()) return false;
     if (!worldOpen(wi)) return false;
     if (starsOf(wi, li)) return true;
     var unsolvedBefore = 0;
@@ -3112,7 +3284,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   function nextUnsolved() {
     for (var wi = 0; wi < WORLDS.length; wi++) {
       if (!worldOpen(wi)) break;
-      for (var li = 0; li < WORLDS[wi].levels.length; li++) if (!starsOf(wi, li)) return { wi: wi, li: li };
+      for (var li = 0; li < WORLDS[wi].levels.length; li++) if (!starsOf(wi, li) && (hasFull() || isFreeLevel(wi, li))) return { wi: wi, li: li };
     }
     return null;
   }
@@ -3356,7 +3528,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     s.classList.remove('enter');
     void s.offsetWidth;
     s.classList.add('enter');
-    if (name === 'home') { setScene(homeScene()); renderHome(); startAmbient(); } else stopAmbient();
+    if (name === 'home') { setScene(homeScene()); renderHome(); startAmbient(); greetModes(); } else stopAmbient();
     if (name === 'levels') { setScene(''); renderLevels(); }
     if (name === 'draw') { setScene(''); renderDraw(); }
     if (name === 'album') { setScene(''); renderAlbum(); }
@@ -3429,22 +3601,26 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   function renderHome() {
     // once every level is cleared, the gold plate goes after the stars that are still missing
     var nx = nextUnsolved(), togo = totalLevels() * 3 - totalStars();
-    $('#info-continue').textContent = nx ? WORLDS[nx.wi].name + ' ' + (nx.li + 1) : togo ? togo + (togo === 1 ? ' star to go' : ' stars to go') : 'Every star';
+    // (without the full game, only the free levels' stars are there to be won)
+    if (!hasFull()) { togo = 0; for (var fw = 0; fw < WORLDS.length; fw++) for (var fl = 0; fl < WORLDS[fw].levels.length; fl++) if (isFreeLevel(fw, fl)) togo += 3 - Math.min(3, starsOf(fw, fl)); }
+    $('#info-continue').textContent = nx ? WORLDS[nx.wi].name + ' ' + (nx.li + 1) : togo ? togo + (togo === 1 ? ' star to go' : ' stars to go')
+      : hasFull() ? 'Every star' : 'The full game';
     $('.dname', $('#go-continue')).textContent = totalSolved() === 0 ? 'Play' : 'Continue';
     var t = today(), res = save.daily.results[t];
     var streak = currentStreak();
+    // each plate says what it is until the player has something there, and after that where they stand
     $('#info-daily').innerHTML = res ? 'Cleared today' + (streak > 1 ? '<br>' + streak + '-day streak' : '')
-      : DAYS[weekdayOf(t)] + (streak > 0 ? '<br>' + streak + '-day streak' : '');
+      : 'Today\'s picture' + (streak > 0 ? '<br>' + streak + '-day streak' : '');
     $('#daily-pic').innerHTML = pictureSVG(dailyPicture(t).rows);
     $('#draw-pic').innerHTML = pictureSVG(['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'], true);
-    $('#info-endless').textContent = 'Fresh boards';
-    $('#info-levels').textContent = totalSolved() + ' of ' + totalLevels();
+    var tier = endlessStanding();
+    $('#info-endless').innerHTML = tier ? tier.name + '<br>' + (save.endless[tier.id] | 0) + ' cleared' : ENDLESS[0].name + ' to ' + ENDLESS[ENDLESS.length - 1].name;
+    $('#go-levels').setAttribute('aria-label', 'Map: ' + totalSolved() + ' of ' + totalLevels() + ' levels');
     tally($('#home-stars'));
-    $('#info-draw').textContent = draw.mine.length ? draw.mine.length + ' made' : 'Make your own';
+    $('#info-draw').textContent = draw.mine.length ? draw.mine.length + ' made' : 'Make your own level';
     var open = modesOpen(), left = 3 - totalSolved();
     var have = albumCount(), ab = $('#go-album'), dots = ab.querySelectorAll('.glyph i');
     for (var q = 0; q < dots.length; q++) dots[q].classList.toggle('on', q < have);
-    $('#info-album').textContent = have;
     ab.setAttribute('aria-label', 'Album: ' + have + ' of ' + PICS.shapes.length + ' daily pictures');
     ab.classList.toggle('closed', !modesOpen());
     ab.setAttribute('aria-disabled', modesOpen() ? 'false' : 'true');
@@ -3454,7 +3630,21 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       b.setAttribute('aria-disabled', open ? 'false' : 'true');
       if (!open) $('#info-' + id).textContent = 'After ' + left + (left === 1 ? ' more level' : ' more levels');
     });
-    $('#kerb').textContent = TRIAL ? 'Trial copy. Your real game is untouched.' : 'No lives. No timer. Take back any move.';
+    // (the line under the menu is only for the trial copy: the no-lives promise is said on the store page, not to someone already playing)
+    $('#kerb').textContent = TRIAL ? 'Trial copy. Your real game is untouched.' : '';
+    $('#kerb').hidden = !TRIAL;
+  }
+  // Where the player stands in Endless: the difficulty they cleared a board on last. (A phone with no
+  // note of that, one the record was moved to, say, takes the difficulty they have cleared most.)
+  function endlessStanding() {
+    var last = null, most = null;
+    ENDLESS.forEach(function (t) {
+      var n = save.endless[t.id] | 0;
+      if (n < 1) return;
+      if (t.id === save.lastTier) last = t;
+      if (!most || n > (save.endless[most.id] | 0)) most = t;
+    });
+    return last || most;
   }
   function currentStreak() {
     var d = save.daily, t = today();
@@ -3540,22 +3730,23 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
         '<svg class="path" width="' + width + '" height="' + height + '" aria-hidden="true"><polyline points="' + pts.join(' ') + '"/></svg>';
       w.levels.forEach(function (lv, li) {
         var b = document.createElement('button'), p = nodeAt(li, width);
-        var st = starsOf(wi, li), isOpen = levelOpen(wi, li);
+        var st = starsOf(wi, li), isOpen = levelOpen(wi, li), paid = !isOpen && open && !hasFull() && !isFreeLevel(wi, li);
         var isNext = nx && nx.wi === wi && nx.li === li;
         var hard = isHard(wi, li);
-        b.className = 'lv' + (lv.name ? ' show' : '') + (isOpen ? '' : ' locked') + (isNext ? ' next' : '') + (st ? ' done' : '') + (hard ? ' hard' : '') +
+        b.className = 'lv' + (lv.name ? ' show' : '') + (isOpen ? '' : ' locked') + (paid ? ' paid' : '') + (isNext ? ' next' : '') + (st ? ' done' : '') + (hard ? ' hard' : '') +
           (p.col === 0 ? ' edge-l' : p.col === MAP_COLS - 1 ? ' edge-r' : '');
-        b.disabled = !isOpen;
+        b.disabled = !isOpen && !paid;
         b.style.left = p.x + 'px'; b.style.top = (height - p.up) + 'px';
         b.style.setProperty('--c', SKY_COLOURS[(li + wi * 2) % SKY_COLOURS.length]);
         b.setAttribute('aria-label', w.name + ' level ' + (li + 1) + (lv.name ? ', ' + lv.name : '') + (hard ? ', hard' : '') +
-          (st ? ', ' + st + (st === 1 ? ' star' : ' stars') : isOpen ? '' : ', locked'));
+          (st ? ', ' + st + (st === 1 ? ' star' : ' stars') : isOpen ? '' : paid ? ', in the full game' : ', locked'));
         var stars = '';
         if (st) for (var k = 0; k < 3; k++) stars += starSVG(k < st ? '' : 'off');
         b.innerHTML = (st ? BURST_NODE : '<span class="disc"></span>') + '<b>' + (li + 1) + '</b><span class="st">' + stars + '</span>' +
           (lv.name ? '<span class="nm"></span>' : '') + (hard ? HOT_MARK : '');
         if (lv.name) $('.nm', b).textContent = lv.name;
         if (isOpen) b.addEventListener('click', function () { snd.tap(); startCampaign(wi, li); });
+        else if (paid) b.addEventListener('click', function () { snd.tap(); openFull(); });
         if (st && justCleared === lvKey(wi, li)) { b.classList.add('fresh'); freshEl = b; }
         grid.appendChild(b);
       });
@@ -3563,8 +3754,16 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       head.className = 'wsign' + (open ? '' : ' locked');
       head.innerHTML = '<h3></h3><p></p><span class="wcount"></span>';
       $('h3', head).textContent = w.name;
-      $('p', head).textContent = open ? w.blurb : 'Clear ' + WORLD_GATE + ' in ' + WORLDS[wi - 1].name + ' to open';
+      // the worlds of the full game: the first says where its free levels end, the rest what they are
+      var bought = hasFull() || wi < FREE_WORLDS;
+      $('p', head).textContent = !bought && wi > FREE_WORLDS ? 'In the full game. ' + w.blurb : open ? (bought ? w.blurb : w.blurb + ' The first ' + PREVIEW + ' are free.') : 'Clear ' + WORLD_GATE + ' in ' + WORLDS[wi - 1].name + ' to open';
       $('.wcount', head).textContent = done + ' of ' + n;
+      if (!bought && (wi === FREE_WORLDS || open)) {
+        var gb = document.createElement('button');
+        gb.className = 'btn buy'; gb.textContent = full.price && shell.on ? 'Full game, ' + full.price : 'Get the full game';
+        gb.addEventListener('click', function () { snd.tap(); openFull(); });
+        head.appendChild(gb);
+      }
       sec.appendChild(grid);
       sec.appendChild(head);
       host.appendChild(sec);
@@ -3588,6 +3787,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   var grid = $('#grid'), board = $('#board'), stage = $('#stage');
 
   function startCampaign(wi, li) {
+    if (!hasFull() && !isFreeLevel(wi, li) && !openAll) { openFull(); return; }
     var lv = WORLDS[wi].levels[li];
     startGame({ mode: 'campaign', wi: wi, li: li, title: WORLDS[wi].name, num: String(li + 1), start: lv.s, tip: lv.tip || (isHard(wi, li) ? 'A hard one. Think before the first launch.' : ''), name: lv.name || '' });
   }
@@ -3597,6 +3797,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     startGame({ mode: 'daily', date: date, title: 'Daily', num: DAYS[weekdayOf(date)].slice(0, 3), start: pic.board, tip: '', name: pic.name });
   }
   function startEndless(tier, seed) {
+    if (tier >= FREE_TIERS && !hasFull()) { openFull(); return; }
     var t = ENDLESS[tier];
     seed = (seed >>> 0) || ((Math.random() * 4294967295) >>> 0) || 1;
     startGame({ mode: 'endless', tier: tier, seed: seed, title: 'Endless', num: t.name, start: tunedBoard(t.cfg, seed), tip: '' });
@@ -4309,7 +4510,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       actions.push({ label: label, half: true, act: act });
     };
     if (G.mode === 'campaign') {
-      var key = lvKey(G.wi, G.li), wasWorldDone = solvedIn(G.wi) === WORLDS[G.wi].levels.length;
+      var key = lvKey(G.wi, G.li), wasWorldDone = solvedIn(G.wi) === WORLDS[G.wi].levels.length, hadModes = modesOpen();
       var after = G.wi + 1 < WORLDS.length ? G.wi + 1 : -1, wasOpen = after >= 0 && worldOpen(after);
       gain = Math.max(0, stars - (save.stars[key] || 0));
       if (stars > (save.stars[key] || 0)) save.stars[key] = stars;
@@ -4321,7 +4522,13 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       ending = (totalSolved() === totalLevels() && !(save.ended & 1) ? 1 : 0) | (total === totalLevels() * 3 && !(save.ended & 2) ? 2 : 0);
       if (ending) { save.ended |= ending; persist(); }
       justCleared = key;
-      var nxt = nextAfter(G.wi, G.li);
+      var nxt = nextAfter(G.wi, G.li), atGate = false, firstGate = false;
+      // the next level is the full game's: a free level still to clear comes first, and the first
+      // time the gate is reached the sheet says what lies past it
+      if (nxt && !hasFull() && !isFreeLevel(nxt.wi, nxt.li)) {
+        atGate = true; nxt = nextUnsolved();
+        try { firstGate = !window.localStorage.getItem(GATE_SEEN); window.localStorage.setItem(GATE_SEEN, '1'); } catch (e) { firstGate = false; }
+      }
       var worldDone = solvedIn(G.wi) === WORLDS[G.wi].levels.length;
       var opened = after >= 0 && !wasOpen && worldOpen(after);
       grand = worldDone && !wasWorldDone;
@@ -4329,6 +4536,12 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       if (gain && isHard(G.wi, G.li)) lede += ' That was a hard one.';
       if (grand) lede += ' ' + WORLDS[G.wi].name + ' is complete.';
       if (opened) lede += ' ' + WORLDS[after].name + ' is now open.';
+      // (what the three are is said on the menu itself, the first time the player stands on it; this
+      // once the sheet's way out leads there, not to the map)
+      var unlocked = !hadModes && modesOpen();
+      if (unlocked) lede += ' Daily, Endless and Draw are now open on the menu.';
+      if (firstGate) lede += ' That was the last free level here. The rest of ' + WORLDS[FREE_WORLDS].name + ', and ' + (WORLDS.length - FREE_WORLDS - 1) + ' more worlds, are in the full game.';
+      if (atGate) actions.push({ label: firstGate ? 'See the full game' : 'The full game', solid: firstGate, act: openFull });
       if (ending) {
         title = ending & 2 ? 'Every star' : 'Every level launched';
         lede = ending & 2 ? 'All ' + totalLevels() * 3 + ' stars: every level cleared with no undo and no hint.' + (ending & 1 ? ' Thank you for playing.' : ' There is nothing left to improve.')
@@ -4337,11 +4550,13 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
         if (nxt) actions.push({ label: 'Next level', act: function () { startCampaign(nxt.wi, nxt.li); } });
         else actions.push({ label: 'Play the daily', act: startDaily });
       }
+      else if (nxt && atGate) actions.push({ label: 'Next free level', solid: !firstGate, act: function () { startCampaign(nxt.wi, nxt.li); } });
       else if (nxt) actions.push({ label: nxt.wi !== G.wi ? 'On to ' + WORLDS[nxt.wi].name : 'Next level', solid: true, act: function () { startCampaign(nxt.wi, nxt.li); } });
       else if (totalSolved() === totalLevels()) { title = 'Every level launched'; lede = 'All ' + totalLevels() + ' levels done. The daily board is new each morning.'; actions.push({ label: 'Play the daily', solid: true, act: startDaily }); }
       if (opened && nxt && nxt.wi === G.wi) actions.push({ label: 'Go to ' + WORLDS[after].name, act: function () { startCampaign(after, 0); } });
       again((save.stars[key] || 0) >= 3);
-      leave('Map', function () { show('levels'); });
+      if (unlocked) leave('Menu', function () { show('home'); });
+      else leave('Map', function () { show('levels'); });
     } else if (G.mode === 'daily') {
       var d = save.daily, date = G.date, had = d.results[date];
       if (!had) firstToday = true;
@@ -4362,9 +4577,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       persist();
       title = 'Daily clear';
       lede = niceDate(date) + '. ' + how + (d.streak > 1 ? ' ' + d.streak + '-day streak.' : '') + (newPic ? ' ' + pic.name + ' is in your album.' : '');
-      // (no count of taps: a board takes the same number however it is cleared, so it says nothing about the player)
-      var shareText = 'Swivel daily ' + date + ' (' + dailyPicture(date).name + '): ' + '★★★'.slice(0, stars) + '☆☆☆'.slice(0, 3 - stars);
-      actions.push({ label: canShare() ? 'Share result' : 'Copy result', solid: true, keep: true, act: function (btn) { shareOut(shareText, linkFor('d=' + date), btn); } });
+      actions.push({ label: canShare() ? 'Share result' : 'Copy result', solid: true, keep: true, act: function (btn) { shareDaily(date, btn); } });
       actions.push({ label: 'Album', act: function () { show('album'); } });
       // the app can remind the player of tomorrow's board: offered on their first few dailies, never pressed on them
       if (shell.on && remind === 'unset' && Object.keys(d.results).length <= 3) actions.push({ label: 'Remind me each day', keep: true, act: function (btn) { remindBtn = btn; askReminder(true); } });
@@ -4411,6 +4624,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     } else {
       var id = ENDLESS[G.tier].id;
       save.endless[id] = (save.endless[id] || 0) + 1;
+      save.lastTier = id;
       persist();
       lede = how + ' ' + save.endless[id] + ' ' + ENDLESS[G.tier].name.toLowerCase() + ' ' + (save.endless[id] === 1 ? 'board' : 'boards') + ' cleared.';
       var tier = G.tier;
@@ -4577,6 +4791,82 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     ], false);
     return true;
   }
+  // ---------- a day's result, to send ----------
+  // Text for a message, and a picture for a story. Neither gives anything away: the grid is the day's
+  // picture, which says nothing of the order the rockets go in, and there is no count of taps (a board
+  // takes the same number however it is cleared, so it says nothing about the player).
+  // The number counts days from the first daily picture, so friends can see they had the same board.
+  function dailyNumber(date) { return dayNumber(date) - PIC_ANCHOR + 1; }
+  var HOW_CLEAN = ['', 'Cleared with a hint', 'Cleared with no hint', 'No undo, no hint'];
+  function dailyShareText(date) {
+    var res = save.daily.results[date] || { stars: 0 }, stars = Math.max(0, Math.min(3, res.stars | 0)), pic = dailyPicture(date);
+    var streak = date === today() ? currentStreak() : 0, n = dailyNumber(date);
+    var grid = pic.rows.map(function (r) { return r.split('').map(function (c) { return c === 'X' ? '🟨' : '⬛'; }).join(''); }).join('\n');
+    return 'Swivel Daily ' + (n > 0 ? '#' + n + ' ' : niceDate(date) + ' ') + '★★★'.slice(0, stars) + '☆☆☆'.slice(0, 3 - stars) + '\n' +
+      (HOW_CLEAN[stars] ? HOW_CLEAN[stars] + '\n' : '') + (streak > 1 ? '🔥 ' + streak + '-day streak\n' : '') + grid;
+  }
+  // The story picture: 1080 by 1920, drawn here with the game's own typeface. Returns a canvas.
+  function shareCard(date) {
+    var W = 1080, H = 1920, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var x = cv.getContext('2d');
+    if (!x) return null;
+    var res = save.daily.results[date] || { stars: 0 }, stars = Math.max(0, Math.min(3, res.stars | 0)), pic = dailyPicture(date);
+    var streak = date === today() ? currentStreak() : 0, n = dailyNumber(date);
+    var font = function (w, px) { return w + ' ' + px + 'px Overpass, -apple-system, system-ui, sans-serif'; };
+    // the night sky, and a few stars in it that are the same every time
+    var g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#232B6E'); g.addColorStop(0.55, '#141838'); g.addColorStop(1, '#0B0E27');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    var rnd = C.mulberry32(dayNumber(date));
+    for (var s = 0; s < 70; s++) { x.fillStyle = 'rgba(255,243,214,' + (0.15 + rnd() * 0.45).toFixed(2) + ')'; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1.5 + rnd() * 2.5, 0, 6.3); x.fill(); }
+    x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    x.fillStyle = '#FFF3D6'; x.font = font(900, 170); x.fillText('Swivel', W / 2, 330);
+    x.fillStyle = '#FFC533'; x.font = font(900, 72); x.fillText('Daily' + (n > 0 ? ' #' + n : ''), W / 2, 460);
+    x.fillStyle = 'rgba(255,243,214,.62)'; x.font = font(700, 44); x.fillText(niceDate(date), W / 2, 530);
+    // the day's picture, in gold
+    var rows = pic.rows, rh = rows.length, rw = 0;
+    rows.forEach(function (r) { rw = Math.max(rw, r.length); });
+    var box = 720, cell = Math.floor(Math.min(box / rw, box / rh)), gap = Math.round(cell * 0.14), ox = (W - cell * rw) / 2, oy = 640 + (box - cell * rh) / 2;
+    var round = function (px, py, w, h, r) { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath(); };
+    for (var ry = 0; ry < rh; ry++) for (var cx = 0; cx < rw; cx++) {
+      var on = rows[ry].charAt(cx) === 'X', px = ox + cx * cell + gap / 2, py = oy + ry * cell + gap / 2, w = cell - gap;
+      round(px, py, w, w, w * 0.22);
+      if (on) { x.shadowColor = 'rgba(255,197,51,.55)'; x.shadowBlur = 28; x.fillStyle = '#FFC533'; x.fill(); x.shadowBlur = 0; x.fillStyle = 'rgba(255,255,255,.28)'; round(px + w * 0.16, py + w * 0.12, w * 0.68, w * 0.16, w * 0.08); x.fill(); }
+      else { x.fillStyle = 'rgba(255,255,255,.06)'; x.fill(); }
+    }
+    // three stars
+    var star = function (sx, sy, r, lit) {
+      x.beginPath();
+      for (var k = 0; k < 10; k++) { var a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.46 : r; x.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); }
+      x.closePath(); x.fillStyle = lit ? '#FFC533' : 'rgba(255,255,255,.16)'; x.fill();
+    };
+    for (var k2 = 0; k2 < 3; k2++) star(W / 2 + (k2 - 1) * 150, 1520, 62, k2 < stars);
+    x.fillStyle = '#FFF3D6'; x.font = font(700, 50);
+    if (HOW_CLEAN[stars]) x.fillText(HOW_CLEAN[stars], W / 2, 1650);
+    if (streak > 1) { x.fillStyle = '#FFC533'; x.fillText(streak + '-day streak', W / 2, 1725); }
+    x.fillStyle = 'rgba(255,243,214,.6)'; x.font = font(700, 40); x.fillText('Same board for everyone today.', W / 2, 1800); x.fillText('Free on the App Store', W / 2, 1856);
+    return cv;
+  }
+  function shareDaily(date, btn) {
+    var text = dailyShareText(date), url = linkFor('d=' + date), cv = null, png = '';
+    try { cv = shareCard(date); png = cv ? cv.toDataURL('image/png') : ''; } catch (e) { png = ''; }
+    if (shell.on) { shell.post('share', { text: text, url: url, image: png.replace(/^data:image\/png;base64,/, '') }); return; }
+    // a browser that can send a picture sends both; one that cannot sends the text; one with no sheet copies it
+    try {
+      if (png && typeof navigator.canShare === 'function' && typeof File === 'function') {
+        var bin = atob(png.split(',')[1]), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var file = new File([bytes], 'swivel-daily-' + date + '.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ text: text + '\n' + url, files: [file] }).then(function () {}, function (e) { if (!e || e.name !== 'AbortError') shareOut(text, url, btn); });
+          return;
+        }
+      }
+    } catch (e) { /* the text alone, below */ }
+    shareOut(text, url, btn);
+  }
+
   // Hand a result or a level to the phone's share sheet. Where there is none, it is copied.
   function canShare() { try { return shell.on || typeof navigator.share === 'function'; } catch (e) { return false; } }
   function shareOut(text, url, btn) {
@@ -4665,7 +4955,8 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       '<li><span class="ico" data-k="4" data-d="0"></span><span><b>The gold rocket</b> goes last. It waits until every other rocket has gone.</span></li>' +
       '<li class="note">Press and hold a rocket to see what its launch would do. A clear earns one star, two with no hint, and three with no undo either. A level keeps its best result.</li>' +
       '</ul>',
-      [{ label: 'Got it', solid: true, act: typeof then === 'function' ? then : function () {} }], true);
+      typeof then === 'function' ? [{ label: 'Got it', solid: true, act: then }]
+        : [{ label: 'Got it', solid: true, half: true, act: function () {} }, { label: 'Game modes', half: true, act: function () { openModes(false); } }], true);
     sh.classList.add('wide');
     var icos = sh.querySelectorAll('.ico');
     for (var i = 0; i < icos.length; i++) {
@@ -4678,6 +4969,69 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
         icos[i].appendChild(b);
       } else icos[i].appendChild(staticPiece(k, d));
     }
+  }
+
+  // ---------- the ways to play ----------
+  // What each entry of the menu is. It is said in two places: on request, from How to play, and once
+  // unasked, to a newcomer the first time they stand on the menu after its last three entries have opened.
+  var MODES = [
+    { id: 'levels', name: 'Levels', text: function () { return totalLevels() + ' levels in ' + WORLDS.length + ' worlds. Continue plays your next one, and Map shows them all.'; } },
+    { id: 'daily', name: 'Daily', text: 'One new board each day, the same for everyone. Clear it to add its picture to your Album.' },
+    { id: 'endless', name: 'Endless', text: function () { return 'Fresh boards for as long as you like. You choose the difficulty, from ' + ENDLESS[0].name + ' to ' + ENDLESS[ENDLESS.length - 1].name + '.'; } },
+    { id: 'draw', name: 'Draw', text: 'Draw a shape and it becomes a level. Share it with a link.' }
+  ];
+  function openModes(first) {
+    var list = first ? MODES.slice(1) : MODES;
+    var sh = openSheet('blue',
+      '<h2>' + (first ? 'New game modes' : 'Game modes') + '</h2>' +
+      (first ? '<p class="lede">The rest of the menu is open now.</p>' : '') +
+      '<ul class="rules modes">' + list.map(function () { return '<li><span class="ico"></span><span><b></b> <span class="what"></span></span></li>'; }).join('') +
+      // (asked by someone still in their first levels: when the three that are shut will open)
+      (modesOpen() ? '' : '<li class="note"></li>') + '</ul>',
+      [{ label: 'Got it', solid: true, act: first ? wakeModes : function () {} }], true);
+    sh.classList.add('wide'); // (as How to play is: on a phone held sideways the list goes in two columns)
+    var left = 3 - totalSolved(), note = $('.modes .note', sh);
+    if (note) note.textContent = 'Daily, Endless and Draw open after ' + left + (left === 1 ? ' more level.' : ' more levels.');
+    var rows = sh.querySelectorAll('.modes li:not(.note)');
+    list.forEach(function (m, i) {
+      var ico = $('.ico', rows[i]);
+      // each wears the picture its entry wears on the menu
+      if (m.id === 'levels') ico.appendChild(staticPiece(0, 0));
+      else if (m.id === 'endless') ico.appendChild(staticPiece(0, 1));
+      else { ico.classList.add('pic'); ico.innerHTML = $(m.id === 'daily' ? '#daily-pic' : '#draw-pic').innerHTML; }
+      $('b', rows[i]).textContent = m.name + '.';
+      $('.what', rows[i]).textContent = typeof m.text === 'function' ? m.text() : m.text;
+    });
+    return sh;
+  }
+  // the card is put away: the entries it spoke of answer on the menu, one after another
+  function wakeModes() {
+    if (current !== 'home' || reduceMotion) return;
+    [['#go-daily', '#go-album'], ['#go-endless'], ['#go-draw']].forEach(function (ids, k) {
+      ids.forEach(function (id) {
+        var el = $(id);
+        el.style.setProperty('--wake', k * 130 + 'ms');
+        el.classList.remove('wake');
+        void el.offsetWidth;
+        el.classList.add('wake');
+        // (taken off once it has played: while it is on, the plate cannot sink under a finger)
+        setTimeout(function () { el.classList.remove('wake'); }, 700 + k * 130);
+      });
+    });
+  }
+  // A newcomer's menu opens up after three levels. The first time they stand on it after that, the card
+  // comes up by itself, once: from then on they are no longer new. (It waits for the app's title to
+  // leave, and gives way to any other sheet: then it is offered on the next visit to the menu.)
+  var modesT = 0;
+  function greetModes() {
+    clearTimeout(modesT);
+    if (seen !== 'new' || totalSolved() < 3) return;
+    modesT = setTimeout(function () {
+      if (seen !== 'new' || totalSolved() < 3 || current !== 'home' || scrim || undecided) return;
+      if ($('#titlecard')) { greetModes(); return; }
+      setSeen('1');
+      openModes(true);
+    }, 500);
   }
 
   // Sound, Music and Haptics: the three switches every Settings sheet starts with.
@@ -4722,6 +5076,8 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       (shell.on ? '<div class="opt"><span id="lbl-remind">Daily reminder</span><button class="switch" id="sw-remind" role="switch" aria-labelledby="lbl-remind"></button></div>' +
         '<div class="opt"><span>Game Center</span><span class="duo"><button class="btn" id="btn-gc">Open</button></span></div>' : '') +
       '<div class="opt"><span>Progress</span><span class="duo"><button class="btn" id="btn-move">Move</button><button class="btn" id="btn-reset">Reset</button></span></div>' +
+      (TRIAL ? '' : '<div class="opt"><span>Full game</span>' + (hasFull() ? '<span class="have">Unlocked</span>'
+        : '<span class="duo"><button class="btn" id="btn-full">' + (shell.on && full.price ? full.price : 'See') + '</button>' + (shell.on ? '<button class="btn" id="btn-restore">Restore</button>' : '') + '</span>') + '</div>') +
       (TRIAL ? '<div class="opt"><span id="lbl-open">Every level open (trial)</span><button class="switch" id="sw-open" role="switch" aria-labelledby="lbl-open"></button></div>' +
         '<div class="opt"><span>The ending (trial)</span><button class="btn" id="btn-ending" style="min-height:44px;font-size:15px;padding:0 14px">Show</button></div>' : '') +
       '</div><p class="fine">' + (cloud.ref && !cloud.off ? 'Progress is saved to your Claude account and to this device. ' : 'Progress is kept on this device. ') + totalSolved() + ' of ' + totalLevels() + ' levels cleared, ' + totalThree() + ' with three stars.</p>',
@@ -4748,6 +5104,9 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
       $('#btn-net', sh).addEventListener('click', function () { snd.tap(); copyText(NET.text(), $('#btn-net', sh)); });
     }
     $('#btn-move', sh).addEventListener('click', function () { snd.tap(); openMove(); });
+    var bf = $('#btn-full', sh), br = $('#btn-restore', sh);
+    if (bf) bf.addEventListener('click', function () { snd.tap(); openFull(); });
+    if (br) br.addEventListener('click', function () { snd.tap(); if (full.waiting) return; full.waiting = true; full.btn = br; br.textContent = 'Checking'; shell.post('restore', null); });
     if (shell.on) {
       var rw = $('#sw-remind', sh), rn = document.createElement('p');
       rn.className = 'fine'; rn.id = 'remind-note'; rn.setAttribute('aria-live', 'polite');
@@ -4850,6 +5209,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
         (shell.on ? ' If iCloud is on for Swivel, your progress is also kept in your own iCloud, so it follows you to a new phone. Only you can read it.' : '') + '</li>' +
       // (in the app one thing can leave the phone without being shared by hand: what Game Center is given. It is said plainly.)
       (shell.on ? '<li>Swivel collects nothing about you or how you play, and sends nothing to its makers.</li>' +
+        '<li>The full game is bought from Apple, through the App Store. Swivel never sees a payment: the phone only tells it whether the full game is yours.</li>' +
         '<li>Game Center, if you are signed in to it, is Apple\'s: the app gives it your Swivel achievements and three scores, and nothing else. A daily reminder, if you turn it on, is made on this phone.</li>'
         : '<li>Nothing about you or how you play is collected or sent anywhere.</li>') +
       (remoteFont ? '<li>This web version loads its typeface from Google Fonts, so your browser asks Google for that file.</li>' : '') +
@@ -4872,14 +5232,14 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     if (current !== 'home') show('home');
     var body = '<h2>Endless</h2><p class="lede">A fresh board every time, checked to be winnable.</p><div class="picks">';
     ENDLESS.forEach(function (t, k) {
-      var n = save.endless[t.id] || 0;
-      body += '<button class="pick" data-t="' + k + '"><b>' + t.name + '</b><span>' + t.info + (n ? '<br>' + n + ' cleared' : '') + '</span></button>';
+      var n = save.endless[t.id] || 0, shut = k >= FREE_TIERS && !hasFull();
+      body += '<button class="pick' + (shut ? ' paid' : '') + '" data-t="' + k + '"><b>' + t.name + '</b><span>' + t.info + (shut ? '<br><i>In the full game</i>' : n ? '<br>' + n + ' cleared' : '') + '</span></button>';
     });
     body += '</div>';
     var sh = openSheet('', body, [{ label: 'Back', act: function () {} }], true);
     var picks = sh.querySelectorAll('.pick');
     for (var i = 0; i < picks.length; i++) {
-      picks[i].addEventListener('click', function () { snd.tap(); closeSheet(); startEndless(+this.getAttribute('data-t')); });
+      picks[i].addEventListener('click', function () { snd.tap(); if (this.classList.contains('paid')) { openFull(); return; } closeSheet(); startEndless(+this.getAttribute('data-t')); });
     }
   }
 
@@ -5210,7 +5570,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
 
   // ---------- wiring ----------
   function on(id, fn) { $(id).addEventListener('click', function () { snd.tap(); fn(); }); }
-  on('#go-continue', function () { var nx = nextUnsolved() || nextShort(); if (nx) startCampaign(nx.wi, nx.li); else show('levels'); });
+  on('#go-continue', function () { var nx = nextUnsolved() || nextShort(); if (nx) startCampaign(nx.wi, nx.li); else if (!hasFull()) openFull(); else show('levels'); });
   on('#home-stars', function () { openRun(false); });
   on('#lv-stars', function () { openRun(false); });
   // closed to a newcomer: the button shakes its head and stays put
@@ -5297,6 +5657,64 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
     guided = G;
     return true;
   }
+  // ---------- the title card (iPhone app only) ----------
+  // Each time the app starts, the title stands alone for a moment: one rocket goes up from the bottom
+  // and bursts behind it. Coming back from another app shows nothing, since the page is still there then.
+  // The game opens underneath meanwhile (the menu, the level the player was in, or the first level),
+  // so nothing waits on the card; it only fades away. In a browser the page is the title as it loads.
+  var TC_FLIGHT = 620, TC_HOLD = 1500, TC_FADE = 300;
+  function titleCard() {
+    // (the page's head hid everything but the sky until now; the card or the game is shown in its place)
+    var html = document.documentElement;
+    if (!shell.on || window.__noTitleCard) { html.classList.remove('tc-pending'); return null; }
+    var app = $('#app'), el = document.createElement('div');
+    el.id = 'titlecard';
+    el.setAttribute('aria-hidden', 'true');
+    try { el.style.background = getComputedStyle(app).backgroundImage; } catch (e) { /* the card's own colour stands */ }
+    // (the title only: the line under it is read on the menu, where there is time to read it)
+    el.innerHTML = '<div class="marquee tc-title">' + $('#home .marquee h1').outerHTML + '</div>';
+    var scene = $('#scene').cloneNode(true);
+    scene.removeAttribute('id'); scene.hidden = false; scene.classList.add('tc-scene');
+    el.appendChild(scene);
+    app.appendChild(el);
+    // (everything else stays hidden, not just covered, until the card starts to fade: on the iPhone
+    // the menu's animated icons can be drawn on a layer of their own, above the card)
+    if (html.className.indexOf('tc-pending') < 0) html.className += ' tc-pending';
+    var head = el.querySelector('h1').getBoundingClientRect(), box = el.getBoundingClientRect();
+    var cx = head.left + head.width / 2 - box.left, cy = head.top + head.height / 2 - box.top;
+    function leave(after) {
+      setTimeout(function () { html.classList.remove('tc-pending'); el.classList.add('out'); setTimeout(function () { el.remove(); }, TC_FADE + 50); }, after);
+    }
+    if (reduceMotion) { el.classList.add('shown'); leave(900); return el; }
+    // the rocket: one of the game's own, lit, flying straight up to the middle of the title
+    var rk = document.createElement('span'), trail = document.createElement('i');
+    rk.className = 'tc-rocket'; trail.className = 'tc-trail';
+    rk.appendChild(staticPiece(4, 0));
+    rk.firstChild.classList.add('lit');
+    var rise = box.height + 60 - cy;
+    rk.style.left = cx + 'px'; rk.style.top = cy + 'px';
+    trail.style.left = cx + 'px'; trail.style.top = cy + 'px';
+    rk.style.setProperty('--rise', rise + 'px'); trail.style.setProperty('--rise', rise + 'px');
+    rk.style.setProperty('--dur', TC_FLIGHT + 'ms'); trail.style.setProperty('--dur', TC_FLIGHT + 'ms');
+    el.appendChild(trail); el.appendChild(rk);
+    // its sound: the launch going up, then the big shell and two smaller ones (the app lets the page
+    // play with no touch first; with Sound off in Settings these stay quiet like every other sound)
+    unlockAudio();
+    whoosh(TC_FLIGHT / 1000, 380, 2400, 0.2);
+    tone(inKey(520), 0.12, 'triangle', 0.06, 0, inKey(520) * 1.5);
+    setTimeout(function () {
+      snd.boom();
+      setTimeout(snd.pop, 170);
+      setTimeout(snd.pop, 320);
+      rk.remove();
+      el.classList.add('shown');
+      burstAt(el, cx, cy, '#FFC533', true).style.setProperty('--R', Math.round(Math.min(box.width * 0.62, 260)) + 'px');
+      setTimeout(function () { burstAt(el, cx - Math.min(head.width * 0.34, box.width * 0.3), cy - head.height * 0.75, '#FF57A4', true); }, 170);
+      setTimeout(function () { burstAt(el, cx + Math.min(head.width * 0.36, box.width * 0.3), cy - head.height * 0.5, '#3F90FF', true); }, 320);
+    }, TC_FLIGHT);
+    leave(TC_HOLD);
+    return el;
+  }
   // the account has answered, or the wait is over: now it is known who is new
   function settle() {
     if (!undecided) return;
@@ -5352,6 +5770,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   setScene(homeScene());
   renderHome();
   startAmbient();
+  titleCard();
   // Someone who may be new is not shown a menu they are about to be taken past (or, inside Claude,
   // one that is about to change once the account answers): the title stands alone until it is known.
   if (!seen && blankSlate()) screens.home.classList.add('waiting');
@@ -5361,7 +5780,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   // the app hands over a link it was opened with while the game is already running
   window.__swivelOpen = function (text) { var l = shell.on ? readLink(text) : null; if (!l) return false; if (booted) arrive(l); else linked = l; return true; };
   var booted = false;
-  function bootOnce(data) { if (booted) return; booted = true; boot(data); if (!undecided) screens.home.classList.remove('waiting'); }
+  function bootOnce(data) { if (booted) return; booted = true; boot(data); if (!undecided) screens.home.classList.remove('waiting'); if (current === 'home') greetModes(); }
   var hot = window.claude && window.claude.hot, waiting = false;
   try { if (hot && hot.snapshot) hot.snapshot(snapshot); } catch (e) { /* ignore */ }
   try { if (hot && typeof hot.ready === 'function') { hot.ready(bootOnce); waiting = true; } } catch (e) { waiting = false; }
@@ -5389,6 +5808,7 @@ if (typeof module === 'object' && module.exports) module.exports = SWIVEL_PICTUR
   window.__swivel = {
     core: C, worlds: WORLDS, state: function () { return G; }, save: function () { return save; },
     startCampaign: startCampaign, startDaily: startDaily, startEndless: startEndless,
+    full: function () { return { has: hasFull(), owned: full.owned, legacy: full.legacy, price: full.price, free: freeLevels() }; }, openFull: openFull, isFree: isFreeLevel, shareCard: shareCard, dailyShare: dailyShareText,
     tap: tapPiece, undo: undo, hint: hint, restart: restart, show: show,
     startCustom: startCustom, replay: replay, endReplay: endReplay, levelCode: levelCode, readCode: readCode, readBoard: readBoard,
     fillShape: fillShape, drawing: function () { return draw; }, loadRows: loadRows, makeLevel: makeLevel,
